@@ -5,6 +5,7 @@
 - [Rattus norvegicus](#rattus-norvegicus)
   - [Getting started](#getting-started)
   - [Tables](#tables)
+  - [The gene table](#the-gene-table)
 
 # Ensembl public databases
 
@@ -326,7 +327,6 @@ I would imagine that `ontology_xref.source_xref_id` matches GO entries in `xref`
 |       11895262 |        4646135 | IEA          |
 |       11895263 |        4653274 | IEA          |
 +----------------+----------------+--------------+
-5 rows in set (0.868 sec)
 ```
 
 Version 114 shows similar results where there are also no GO IDs in the joined table.
@@ -341,3 +341,139 @@ mysql \
 ```
 
 I am literally missing a link.
+
+## The gene table
+
+Let's take a different approach and start from the `gene` table; the description of this table is simply "Allows transcripts to be related to genes."
+
+```console
+mysql --user=anonymous --host=ensembldb.ensembl.org -A
+```
+```mysql
+use rattus_norvegicus_core_113_72;
+select * from gene limit 5;
+```
+```
++---------+----------------+-------------+---------------+------------------+----------------+-------------------+-----------------+---------+-------------------------------------------------------------------------------------+------------+-------------------------+--------------------+---------+---------------------+---------------------+
+| gene_id | biotype        | analysis_id | seq_region_id | seq_region_start | seq_region_end | seq_region_strand | display_xref_id | source  | description                                                                         | is_current | canonical_transcript_id | stable_id          | version | created_date        | modified_date       |
++---------+----------------+-------------+---------------+------------------+----------------+-------------------+-----------------+---------+-------------------------------------------------------------------------------------+------------+-------------------------+--------------------+---------+---------------------+---------------------+
+|       1 | protein_coding |          10 |             1 |         36112690 |       36122387 |                -1 |            NULL | ensembl | NULL                                                                                |          1 |                      36 | ENSRNOG00000066169 |       1 | 2021-02-26 12:35:27 | 2021-02-26 12:35:27 |
+|       2 | protein_coding |          10 |             4 |        113273430 |      113280793 |                -1 |            NULL | ensembl | NULL                                                                                |          1 |                       1 | ENSRNOG00000064641 |       1 | 2021-02-26 12:35:27 | 2021-02-26 12:35:27 |
+|       3 | protein_coding |          10 |             3 |         71048570 |       71049502 |                 1 |         4445847 | ensembl | olfactory receptor family 5 subfamily M member 3 [Source:RGD Symbol;Acc:1332991]    |          1 |                      13 | ENSRNOG00000033395 |       2 | 2005-03-02 00:00:00 | 2021-02-26 12:35:27 |
+|       4 | protein_coding |          10 |             3 |         60624154 |       60625215 |                -1 |            NULL | ensembl | NULL                                                                                |          1 |                      25 | ENSRNOG00000066660 |       1 | 2021-02-26 12:35:27 | 2021-02-26 12:35:27 |
+|       5 | protein_coding |          10 |             1 |        157231467 |      157232417 |                 1 |         4446193 | ensembl | olfactory receptor family 51 subfamily F member 23C [Source:RGD Symbol;Acc:1333218] |          1 |                      11 | ENSRNOG00000070168 |       1 | 2021-02-26 12:35:27 | 2021-02-26 12:35:27 |
++---------+----------------+-------------+---------------+------------------+----------------+-------------------+-----------------+---------+-------------------------------------------------------------------------------------+------------+-------------------------+--------------------+---------+---------------------+---------------------+
+5 rows in set (0.254 sec)
+```
+
+Number of rows.
+
+```mysql
+select count(*) from gene limit 5;
+```
+```
++----------+
+| count(*) |
++----------+
+|    30562 |
++----------+
+1 row in set (0.254 sec)
+```
+
+Join with `object_xref` using `gene_id` and keeping only `Gene`. (I'm getting lost with my SQL commands, so I'll start writing them in the recommended syntax.)
+
+```mysql
+SELECT
+    count(*)
+FROM
+    gene g
+JOIN
+    object_xref oxr ON oxr.ensembl_id = g.gene_id AND oxr.ensembl_object_type = 'Gene';
+```
+```
++----------+
+| count(*) |
++----------+
+|   264830 |
++----------+
+1 row in set (0.311 sec)
+```
+
+Tally database information available for each gene.
+
+```mysql
+SELECT
+    edb.db_name,
+    count(edb.db_name) as total
+FROM
+    gene g
+JOIN
+    object_xref oxr ON oxr.ensembl_id = g.gene_id AND oxr.ensembl_object_type = 'Gene'
+JOIN
+    xref x ON x.xref_id = oxr.xref_id
+JOIN
+    external_db edb ON edb.external_db_id = x.external_db_id
+LEFT JOIN
+    ontology_xref ox ON ox.object_xref_id = oxr.object_xref_id
+GROUP BY
+    edb.db_name;
+```
+```
++---------------+-------+
+| db_name       | total |
++---------------+-------+
+| ArrayExpress  | 30562 |
+| EntrezGene    | 31587 |
+| MGI           |     7 |
+| miRBase       |   428 |
+| Reactome_gene | 84358 |
+| RFAM          |  2029 |
+| RGD           | 30439 |
+| Uniprot_gn    | 53833 |
+| WikiGene      | 31587 |
++---------------+-------+
+9 rows in set (2.399 sec)
+```
+
+Repeat on 114.
+
+```mysql
+use rattus_norvegicus_core_114_1;
+SELECT
+    edb.db_name,
+    count(edb.db_name) as total
+FROM
+    gene g
+JOIN
+    object_xref oxr ON oxr.ensembl_id = g.gene_id AND oxr.ensembl_object_type = 'Gene'
+JOIN
+    xref x ON x.xref_id = oxr.xref_id
+JOIN
+    external_db edb ON edb.external_db_id = x.external_db_id
+LEFT JOIN
+    ontology_xref ox ON ox.object_xref_id = oxr.object_xref_id
+GROUP BY
+    edb.db_name;
+```
+```
++------------------+-------+
+| db_name          | total |
++------------------+-------+
+| ArrayExpress     | 43360 |
+| EntrezGene       | 38097 |
+| FlyBaseName_gene |     1 |
+| HGNC             | 15210 |
+| MGI              |  3101 |
+| miRBase          |   222 |
+| Reactome_gene    | 80038 |
+| RFAM             |  2379 |
+| RGD              | 23685 |
+| SGD_GENE         |     1 |
+| Uniprot_gn       | 36758 |
+| WikiGene         | 38097 |
+| ZFIN_ID          |   761 |
++------------------+-------+
+13 rows in set (2.426 sec)
+```
+
+No dice but I think I know why now.
