@@ -7,6 +7,7 @@
   - [Tables](#tables)
   - [The gene table](#the-gene-table)
   - [The transcript table](#the-transcript-table)
+  - [Biomart](#biomart)
 
 # Ensembl public databases
 
@@ -603,3 +604,8 @@ cat rattus_norvegicus_core_113_72_go_lookup.txt | wc -l
 ```
 158972
 ```
+
+## Biomart
+
+Using version 114 (currently the latest version) I double-checked GO terms associated with two genes and got the [expected result](https://davetang.github.io/muse/biomart_rattus_norvegicus.html#Gene_Ontology_lookup).
+
