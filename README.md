@@ -196,4 +196,8 @@ select external_db.db_display_name, count(external_db.db_display_name) as total 
 6 rows in set (0.563 sec)
 ```
 
-Hmmmm.....
+Looking at the [Ensembl 114 has been released! blog post](https://www.ensembl.info/2025/05/07/ensembl-114-has-been-released/) the large difference in numbers may be due to:
+
+> Updated Rat reference (GRCr8 automated annotation)
+>     Rattus norvegicus (GRCr8)
+
