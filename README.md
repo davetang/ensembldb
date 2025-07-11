@@ -265,3 +265,79 @@ mysql \
 
 What I currently still don't understand is why there are no GO IDs in `rattus_norvegicus_core_113_72_ontology_xref_join.txt`.
 
+The query below shows that in the `xref` table there are 205056 GO entries.
+
+```mysql
+select external_db.db_display_name, count(external_db.db_display_name) as total from xref join external_db on xref.external_db_id = external_db.external_db_id group by external_db.db_display_name;
+```
+```
++-----------------------------------------------------------------------------+--------+
+| db_display_name                                                             | total  |
++-----------------------------------------------------------------------------+--------+
+| BioGRID Interaction data, The General Repository for Interaction Datasets   |   1195 |
+| ChEMBL                                                                      |    527 |
+| EntrezGene transcript name                                                  |      2 |
+| European Nucleotide Archive                                                 |  12244 |
+| Expression Atlas                                                            |  30562 |
+| GO                                                                          | 205056 |
+| INSDC protein ID                                                            |  23530 |
+| InterPro                                                                    |  45163 |
+| MEROPS - the Peptidase Database                                             |    481 |
+| MGI Symbol                                                                  |      7 |
+| MGI transcript name                                                         |      8 |
+| miRBase                                                                     |    424 |
+| miRBase transcript name                                                     |      4 |
+| NCBI gene (formerly Entrezgene)                                             |  21395 |
+| PDB                                                                         |   1824 |
+| Reactome                                                                    |   1694 |
+| Reactome gene                                                               |   1731 |
+| Reactome transcript                                                         |   1697 |
+| RefSeq mRNA                                                                 |  18964 |
+| RefSeq mRNA predicted                                                       |  53563 |
+| RefSeq ncRNA                                                                |    519 |
+| RefSeq ncRNA predicted                                                      |   6348 |
+| RefSeq peptide                                                              |  20432 |
+| RefSeq peptide predicted                                                    |  37932 |
+| RFAM                                                                        |     54 |
+| RFAM transcript name                                                        |    113 |
+| RGD Symbol                                                                  |  26739 |
+| RGD transcript name                                                         |  49208 |
+| RNAcentral                                                                  |   7876 |
+| UniParc                                                                     |  44049 |
+| UniProt transcript name                                                     |     65 |
+| UniProtKB Gene Name                                                         |  53527 |
+| UniProtKB generic accession number (TrEMBL or SwissProt not differentiated) |  15375 |
+| UniProtKB isoform                                                           |    833 |
+| UniProtKB/Swiss-Prot                                                        |   4436 |
+| UniProtKB/TrEMBL                                                            |  49957 |
+| WikiGene                                                                    |  21395 |
++-----------------------------------------------------------------------------+--------+
+```
+
+I would imagine that `ontology_xref.source_xref_id` matches GO entries in `xref` but this is not the case; there are no GO IDs in the joined table. Recall `ontology_xref` looks like this:
+
+```
++----------------+----------------+--------------+
+| object_xref_id | source_xref_id | linkage_type |
++----------------+----------------+--------------+
+|       11895259 |        4650749 | IDA          |
+|       11895260 |        4650749 | IEA          |
+|       11895261 |        4646135 | IEA          |
+|       11895262 |        4646135 | IEA          |
+|       11895263 |        4653274 | IEA          |
++----------------+----------------+--------------+
+5 rows in set (0.868 sec)
+```
+
+Version 114 shows similar results where there are also no GO IDs in the joined table.
+
+```console
+mysql \
+   --user=anonymous \
+   --host=ensembldb.ensembl.org \
+   -A \
+   -e "use rattus_norvegicus_core_114_1; select * from ontology_xref join object_xref on ontology_xref.object_xref_id = object_xref.object_xref_id join xref on ontology_xref.source_xref_id = xref.xref_id;" \
+   > rattus_norvegicus_core_114_1_ontology_xref_join.txt
+```
+
+I am literally missing a link.
