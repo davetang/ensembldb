@@ -157,43 +157,43 @@ echo $(( 6109+7996+76238+62300+11244+144 ))
 164031
 ```
 
-To make the output nicely, let's also join on `external_db`.
+Join on `external_db` so we have the actual names of the databases.
 
 ```mysql
-select external_db.db_display_name, count(external_db.db_display_name) from ontology_xref join xref on ontology_xref.source_xref_id = xref.xref_id join external_db on xref.external_db_id = external_db.external_db_id group by external_db.external_db_id;
+select external_db.db_display_name, count(external_db.db_display_name) as total from ontology_xref join xref on ontology_xref.source_xref_id = xref.xref_id join external_db on xref.external_db_id = external_db.external_db_id group by external_db.external_db_id;
 ```
 ```
-+-----------------------------------------------------------------------------+------------------------------------+
-| db_display_name                                                             | count(external_db.db_display_name) |
-+-----------------------------------------------------------------------------+------------------------------------+
-| UniProtKB/TrEMBL                                                            |                               6109 |
-| UniProtKB/Swiss-Prot                                                        |                               7996 |
-| UniProtKB generic accession number (TrEMBL or SwissProt not differentiated) |                              76238 |
-| UniProtKB Gene Name                                                         |                              62300 |
-| RNAcentral                                                                  |                              11244 |
-| UniProtKB isoform                                                           |                                144 |
-+-----------------------------------------------------------------------------+------------------------------------+
-6 rows in set (0.367 sec)
++-----------------------------------------------------------------------------+-------+
+| db_display_name                                                             | total |
++-----------------------------------------------------------------------------+-------+
+| UniProtKB/TrEMBL                                                            |  6109 |
+| UniProtKB/Swiss-Prot                                                        |  7996 |
+| UniProtKB generic accession number (TrEMBL or SwissProt not differentiated) | 76238 |
+| UniProtKB Gene Name                                                         | 62300 |
+| RNAcentral                                                                  | 11244 |
+| UniProtKB isoform                                                           |   144 |
++-----------------------------------------------------------------------------+-------+
+6 rows in set (0.369 sec)
 ```
 
 Let's see if we get similar results using version 114.
 
 ```mysql
 use rattus_norvegicus_core_114_1;
-select external_db.db_display_name, count(external_db.db_display_name) from ontology_xref join xref on ontology_xref.source_xref_id = xref.xref_id join external_db on xref.external_db_id = external_db.external_db_id group by external_db.external_db_id;
+select external_db.db_display_name, count(external_db.db_display_name) as total from ontology_xref join xref on ontology_xref.source_xref_id = xref.xref_id join external_db on xref.external_db_id = external_db.external_db_id group by external_db.external_db_id;
 ```
 ```
-+-----------------------------------------------------------------------------+------------------------------------+
-| db_display_name                                                             | count(external_db.db_display_name) |
-+-----------------------------------------------------------------------------+------------------------------------+
-| InterPro                                                                    |                             167744 |
-| UniProtKB/TrEMBL                                                            |                             130525 |
-| UniProtKB/Swiss-Prot                                                        |                              32202 |
-| UniProtKB generic accession number (TrEMBL or SwissProt not differentiated) |                             123811 |
-| RNAcentral                                                                  |                              10972 |
-| UniProtKB isoform                                                           |                                146 |
-+-----------------------------------------------------------------------------+------------------------------------+
-6 rows in set (6.557 sec)
++-----------------------------------------------------------------------------+--------+
+| db_display_name                                                             | total  |
++-----------------------------------------------------------------------------+--------+
+| InterPro                                                                    | 167744 |
+| UniProtKB/TrEMBL                                                            | 130525 |
+| UniProtKB/Swiss-Prot                                                        |  32202 |
+| UniProtKB generic accession number (TrEMBL or SwissProt not differentiated) | 123811 |
+| RNAcentral                                                                  |  10972 |
+| UniProtKB isoform                                                           |    146 |
++-----------------------------------------------------------------------------+--------+
+6 rows in set (0.563 sec)
 ```
 
 Hmmmm.....
