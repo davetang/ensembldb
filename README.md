@@ -6,6 +6,7 @@
   - [Getting started](#getting-started)
   - [Tables](#tables)
   - [The gene table](#the-gene-table)
+  - [The transcript table](#the-transcript-table)
 
 # Ensembl public databases
 
@@ -476,4 +477,129 @@ GROUP BY
 13 rows in set (2.426 sec)
 ```
 
-No dice but I think I know why now.
+## The transcript table
+
+The `transcript` table is described as:
+
+> Stores information about transcripts. Has seq_region_start, seq_region_end and seq_region_strand for faster retrieval and to allow storage independently of genes and exons. Note that a transcript is usually associated with a translation, but may not be, e.g. in the case of pseudogenes and RNA genes (those that code for RNA molecules).
+
+
+```console
+mysql --user=anonymous --host=ensembldb.ensembl.org -A
+```
+```mysql
+use rattus_norvegicus_core_113_72;
+select * from transcript limit 5;
+```
+```
++---------------+---------+-------------+---------------+------------------+----------------+-------------------+-----------------+---------+----------------+-------------+------------+--------------------------+--------------------+---------+---------------------+---------------------+
+| transcript_id | gene_id | analysis_id | seq_region_id | seq_region_start | seq_region_end | seq_region_strand | display_xref_id | source  | biotype        | description | is_current | canonical_translation_id | stable_id          | version | created_date        | modified_date       |
++---------------+---------+-------------+---------------+------------------+----------------+-------------------+-----------------+---------+----------------+-------------+------------+--------------------------+--------------------+---------+---------------------+---------------------+
+|             1 |       2 |          10 |             4 |        113273430 |      113280793 |                -1 |            NULL | ensembl | protein_coding | NULL        |          1 |                        1 | ENSRNOT00000105380 |       1 | 2021-02-26 12:35:27 | 2021-02-26 12:35:27 |
+|             2 |      15 |          10 |             1 |         84097744 |       84100200 |                -1 |            NULL | ensembl | lncRNA         | NULL        |          1 |                     NULL | ENSRNOT00000100743 |       1 | 2021-02-26 12:35:27 | 2021-02-26 12:35:27 |
+|             3 |       7 |          10 |             2 |        235269677 |      235280362 |                 1 |            NULL | ensembl | lncRNA         | NULL        |          1 |                     NULL | ENSRNOT00000096208 |       1 | 2021-02-26 12:35:27 | 2021-02-26 12:35:27 |
+|             4 |      17 |          10 |             1 |           444133 |         449072 |                 1 |            NULL | ensembl | lncRNA         | NULL        |          1 |                     NULL | ENSRNOT00000106905 |       1 | 2021-02-26 12:35:27 | 2021-02-26 12:35:27 |
+|             5 |      21 |          10 |             1 |         79820465 |       79827571 |                 1 |         4728685 | ensembl | protein_coding | NULL        |          1 |                        2 | ENSRNOT00000026088 |       6 | 2009-07-29 15:36:02 | 2021-02-26 12:35:27 |
++---------------+---------+-------------+---------------+------------------+----------------+-------------------+-----------------+---------+----------------+-------------+------------+--------------------------+--------------------+---------+---------------------+---------------------+
+5 rows in set (0.242 sec)
+```
+
+Tally database information available for each transcript.
+
+```mysql
+SELECT
+    edb.db_name,
+    count(edb.db_name) as total
+FROM
+    transcript t
+JOIN
+    object_xref oxr ON oxr.ensembl_id = t.transcript_id AND oxr.ensembl_object_type = 'Transcript'
+JOIN
+    xref x ON x.xref_id = oxr.xref_id
+JOIN
+    external_db edb ON edb.external_db_id = x.external_db_id
+LEFT JOIN
+    ontology_xref ox ON ox.object_xref_id = oxr.object_xref_id
+GROUP BY
+    edb.db_name;
+```
+```
++------------------------+--------+
+| db_name                | total  |
++------------------------+--------+
+| EntrezGene_trans_name  |      2 |
+| GO                     | 164166 |
+| MGI_trans_name         |      8 |
+| miRBase_trans_name     |      4 |
+| Reactome_transcript    |  66186 |
+| RefSeq_mRNA            |  18987 |
+| RefSeq_mRNA_predicted  |  53613 |
+| RefSeq_ncRNA           |    519 |
+| RefSeq_ncRNA_predicted |  16409 |
+| RFAM_trans_name        |    113 |
+| RGD_trans_name         |  49208 |
+| RNAcentral             |   8149 |
+| Uniprot_gn_trans_name  |     74 |
++------------------------+--------+
+13 rows in set (8.567 sec)
+```
+
+And there we have it! As noted in the description of `ontology_xref`:
+
+* The relationship to GO that is stored in the database is actually derived through the relationship of EnsEMBL peptides to SwissProt peptides, i.e. the relationship is derived like this: ENSP -> SWISSPROT -> GO And the evidence tag describes the relationship between the SwissProt Peptide and the GO entry.
+
+Therefore we need to get associations via transcripts and then convert the transcript IDs back to gene IDs.
+
+```mysql
+SELECT
+    g.stable_id as ensembl_gene_id,
+    x.dbprimary_acc as go_id
+FROM
+    transcript t
+JOIN
+    object_xref oxr ON oxr.ensembl_id = t.transcript_id AND oxr.ensembl_object_type = 'Transcript'
+JOIN
+    xref x ON x.xref_id = oxr.xref_id
+JOIN
+    external_db edb ON edb.external_db_id = x.external_db_id
+JOIN
+    gene g ON g.gene_id = t.gene_id
+WHERE
+    edb.db_name = 'GO'
+LIMIT 5;
+```
+```
++--------------------+------------+
+| ensembl_gene_id    | go_id      |
++--------------------+------------+
+| ENSRNOG00000063979 | GO:0046540 |
+| ENSRNOG00000063979 | GO:0005687 |
+| ENSRNOG00000063979 | GO:0000353 |
+| ENSRNOG00000063979 | GO:0000244 |
+| ENSRNOG00000063979 | GO:0017070 |
++--------------------+------------+
+5 rows in set (0.242 sec)
+```
+
+Export as a table.
+
+```console
+mysql \
+   --user=anonymous \
+   --host=ensembldb.ensembl.org \
+   -A \
+   -e "use rattus_norvegicus_core_113_72; select g.stable_id as ensembl_gene_id,x.dbprimary_acc as go_id from transcript t join object_xref oxr ON oxr.ensembl_id = t.transcript_id AND oxr.ensembl_object_type = 'Transcript' join xref x ON x.xref_id = oxr.xref_id join external_db edb ON edb.external_db_id = x.external_db_id join gene g ON g.gene_id = t.gene_id where edb.db_name = 'GO';" \
+   > rattus_norvegicus_core_113_72_go_lookup.txt
+
+mysql \
+   --user=anonymous \
+   --host=ensembldb.ensembl.org \
+   -A \
+   -e "use rattus_norvegicus_core_114_1; select g.stable_id as ensembl_gene_id,x.dbprimary_acc as go_id from transcript t join object_xref oxr ON oxr.ensembl_id = t.transcript_id AND oxr.ensembl_object_type = 'Transcript' join xref x ON x.xref_id = oxr.xref_id join external_db edb ON edb.external_db_id = x.external_db_id join gene g ON g.gene_id = t.gene_id where edb.db_name = 'GO';" \
+   > rattus_norvegicus_core_114_1_go_lookup.txt
+
+cat rattus_norvegicus_core_113_72_go_lookup.txt | wc -l
+```
+```
+158972
+```
