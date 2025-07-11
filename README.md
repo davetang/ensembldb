@@ -1,3 +1,11 @@
+## Table of Contents
+
+- [Ensembl public databases](#ensembl-public-databases)
+- [Setup](#setup)
+- [Rattus norvegicus](#rattus-norvegicus)
+  - [Getting started](#getting-started)
+  - [Tables](#tables)
+
 # Ensembl public databases
 
 Typically one wouldn't need to delve into the innards of the [Ensembl public MySQL Servers](https://www.ensembl.org/info/data/mysql.html?redirect=no) because it's much easier to use Biomart. It also requires understanding the [database schema](https://www.ensembl.org/info/docs/api/core/core_schema.html), which is not that straightforward. However, Biomart is sometimes unreachable and/or does not work as expected. A deeper understanding of the Ensembl public databases can help in those cases since we can directly retrieve the data we want from the databases. Given my reliance on Ensembl, it is a worthwhile endeavour to try to understand the backend of Ensembl.
@@ -32,7 +40,9 @@ cat ensembldb_databases.txt| wc -l
 
 # Rattus norvegicus
 
-This work was motivated by the fact that the Ensembl version 113 archive does not contain rat references, which means I can't use Biomart. Looking through `ensembldb_databases.txt`, the database I need is `rattus_norvegicus_core_113_72`. I need a single lookup table that connects Ensembl gene IDs with their associated Gene Ontology terms. Looking through the schema, it seems the table that I need is [ontology_xref](https://www.ensembl.org/info/docs/api/core/core_schema.html#ontology_xref).
+## Getting started
+
+This work was motivated by the fact that the Ensembl version 113 archive does not contain rat references, which means I can't use Biomart. Looking through `ensembldb_databases.txt`, the database I need is `rattus_norvegicus_core_113_72`. I need a single lookup table that connects Ensembl gene IDs with their associated Gene Ontology (GO) terms. Looking through the schema, it seems the table that I need is [ontology_xref](https://www.ensembl.org/info/docs/api/core/core_schema.html#ontology_xref).
 
 * This table associates Evidence Tags to the relationship between EnsEMBL objects and ontology accessions (primarily GO accessions).
 * The relationship to GO that is stored in the database is actually derived through the relationship of EnsEMBL peptides to SwissProt peptides, i.e. the relationship is derived like this: ENSP -> SWISSPROT -> GO And the evidence tag describes the relationship between the SwissProt Peptide and the GO entry.
@@ -62,6 +72,45 @@ select * from ontology_xref limit 5;
 
 * `object_xref_id` - Composite key. Foreign key references to the `object_xref` table.
 * `source_xref_id` - Composite key. Foreign key references to the `xref` table.
+
+`object_xref`:
+
+> Describes links between EnsEMBL objects and objects held in external databases. The EnsEMBL object can be one of several types; the type is held in the ensembl_object_type column. The ID of the particular EnsEMBL gene, translation or whatever is given in the ensembl_id column. The xref_id points to the entry in the xref table that holds data about the external object. Each EnsEMBL object can be associated with zero or more xrefs. An xref object can be associated with one or more EnsEMBL objects.
+
+```mysql
+select * from object_xref limit 5;
+```
+```
++----------------+------------+---------------------+---------+--------------------+-------------+
+| object_xref_id | ensembl_id | ensembl_object_type | xref_id | linkage_annotation | analysis_id |
++----------------+------------+---------------------+---------+--------------------+-------------+
+|        4089743 |      30316 | Gene                | 3859187 | NULL               |          72 |
+|        4088975 |      18247 | Gene                | 3859187 | NULL               |          72 |
+|        4088616 |      17440 | Gene                | 3859187 | NULL               |          72 |
+|        4088163 |      11380 | Gene                | 3859187 | NULL               |          72 |
+|        4088491 |       3301 | Gene                | 3859187 | NULL               |          72 |
++----------------+------------+---------------------+---------+--------------------+-------------+
+5 rows in set (0.254 sec)
+```
+
+`xref`:
+
+> Holds data about objects which are external to EnsEMBL, but need to be associated with EnsEMBL objects. Information about the database that the external object is stored in is held in the external_db table entry referred to by the external_db column.
+
+```mysql
+select * from xref limit 5;
+```
+```
++---------+----------------+---------------+----------------+---------+-------------------------------------------------------+----------------+-----------+
+| xref_id | external_db_id | dbprimary_acc | display_label  | version | description                                           | info_type      | info_text |
++---------+----------------+---------------+----------------+---------+-------------------------------------------------------+----------------+-----------+
+| 4637553 |           1810 | NP_001388970  | NP_001388970.1 | 1       | UPF0450 protein C17orf58 homolog isoform 2 precursor  | SEQUENCE_MATCH |           |
+|       2 |           2250 | P18088        | P18088         | 0       | NULL                                                  | DEPENDENT      |           |
+|       3 |           2250 | C9E895        | C9E895         | 0       | NULL                                                  | DEPENDENT      |           |
+|       5 |           2250 | D3ZEM1        | D3ZEM1         | 0       | NULL                                                  | DEPENDENT      |           |
+|       7 |           2250 | D3ZEL3        | D3ZEL3         | 0       | NULL                                                  | DEPENDENT      |           |
++---------+----------------+---------------+----------------+---------+-------------------------------------------------------+----------------+-----------+
+```
 
 Join with `object_xref`.
 
@@ -200,4 +249,19 @@ Looking at the [Ensembl 114 has been released! blog post](https://www.ensembl.in
 
 > Updated Rat reference (GRCr8 automated annotation)
 >     Rattus norvegicus (GRCr8)
+
+## Tables
+
+Export `ontology_xref` joined with `object_xref` and `xref`.
+
+```console
+mysql \
+   --user=anonymous \
+   --host=ensembldb.ensembl.org \
+   -A \
+   -e "use rattus_norvegicus_core_113_72; select * from ontology_xref join object_xref on ontology_xref.object_xref_id = object_xref.object_xref_id join xref on ontology_xref.source_xref_id = xref.xref_id;" \
+   > rattus_norvegicus_core_113_72_ontology_xref_join.txt
+```
+
+What I currently still don't understand is why there are no GO IDs in `rattus_norvegicus_core_113_72_ontology_xref_join.txt`.
 
