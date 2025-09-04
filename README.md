@@ -8,6 +8,7 @@
   - [The gene table](#the-gene-table)
   - [The transcript table](#the-transcript-table)
   - [Biomart](#biomart)
+- [Ensembl Compara](#ensembl-compara)
 
 # Ensembl public databases
 
@@ -609,3 +610,27 @@ cat rattus_norvegicus_core_113_72_go_lookup.txt | wc -l
 
 Using version 114 (currently the latest version) I double-checked GO terms associated with two genes and got the [expected result](https://davetang.github.io/muse/biomart_rattus_norvegicus.html#Gene_Ontology_lookup).
 
+# Ensembl Compara
+
+[Ensembl Compara](https://www.ensembl.org/info/genome/compara/index.html) provides cross-species resources and analyses, at both the sequence level and the gene level.
+
+[Homology types](https://www.ensembl.org/info/genome/compara/homology_types.html); orthologues are homologues which diverged by a speciation event. There are four types of orthologues:
+
+1. 1-to-1 orthologues (ortholog_one2one)
+2. 1-to-many orthologues (ortholog_one2many)
+3. many-to-many orthologues (ortholog_many2many)
+4. between-species paralogues – only as exceptions
+
+Ensembl have two methods to provide quality scores for orthologue pairs:
+
+1. Gene order conservation (GOC) score
+2. Whole genome alignment score
+
+There are four ways to [access Ensembl comparative genomics data](https://www.ensembl.org/info/genome/compara/accessing_compara.html):
+
+1. The Browser.
+    * You can access gene trees and homologues from a gene.
+    * You can access alignments from a genomic region.
+2. Homologues are available in BioMart (Ensembl Gene database).
+3. Perl APIs, including the Compara API.
+4. The Ensembl REST API.
