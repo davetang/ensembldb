@@ -10,6 +10,7 @@
   - [Biomart](#biomart)
 - [Homo sapiens](#homo-sapiens)
 - [Ensembl Compara](#ensembl-compara)
+  - [Database](#database)
 
 # Ensembl public databases
 
@@ -724,3 +725,94 @@ There are four ways to [access Ensembl comparative genomics data](https://www.en
 2. Homologues are available in BioMart (Ensembl Gene database).
 3. Perl APIs, including the Compara API.
 4. The Ensembl REST API.
+
+## Database
+
+It wasn't clear to me where the database/table for Ensembl Compara resided but I found the answer in the [registry documentation](https://www.ensembl.org/info/docs/api/registry.html):
+
+> For connecting to the EnsEMBL Compara database, you will have to create a Bio::EnsEMBL::Compara::DBSQL::DBAdaptor. Here is an example:
+
+```perl
+new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(
+  -host    => 'ensembldb.ensembl.org',
+  -user    => 'anonymous',
+  -port    => 3306,
+  -species => 'compara',
+  -dbname  => 'ensembl_compara_70'
+);
+
+@aliases = ( 'ensembl_compara_70', 'compara70', 'compara' );
+
+Bio::EnsEMBL::Utils::ConfigRegistry->add_alias(
+  -species => 'Compara70',
+  -alias   => \@aliases
+);
+```
+
+[Tables in Ensembl Compara](https://www.ensembl.org/info/docs/api/compara/compara_schema.html).
+
+```console
+mysql --user=anonymous --host=ensembldb.ensembl.org -A -e "use ensembl_compara_113; show tables;" > ensembl_compara_113_tables.txt
+cat ensembl_compara_113_tables.txt
+```
+```
+Tables_in_ensembl_compara_113
+CAFE_gene_family
+CAFE_species_gene
+conservation_score
+constrained_element
+dnafrag
+dnafrag_alt_region
+dnafrag_region
+exon_boundaries
+external_db
+family
+family_member
+gene_align
+gene_align_member
+gene_member
+gene_member_hom_stats
+gene_member_qc
+gene_tree_node
+gene_tree_node_attr
+gene_tree_node_tag
+gene_tree_object_store
+gene_tree_root
+gene_tree_root_attr
+gene_tree_root_tag
+genome_db
+genomic_align
+genomic_align_block
+genomic_align_tree
+hmm_annot
+hmm_curated_annot
+hmm_profile
+homology
+homology_member
+mapping_session
+member_xref
+meta
+method_link
+method_link_species_set
+method_link_species_set_attr
+method_link_species_set_tag
+ncbi_taxa_name
+ncbi_taxa_node
+other_member_sequence
+peptide_align_feature
+seq_member
+seq_member_projection
+seq_member_projection_stable_id
+sequence
+species_set
+species_set_header
+species_set_tag
+species_tree_node
+species_tree_node_attr
+species_tree_node_tag
+species_tree_root
+stable_id_history
+synteny_region
+```
+
+The [gene_member](https://www.ensembl.org/info/docs/api/compara/compara_schema.html#gene_member) table links sequences to the EnsEMBL core DB or to external DBs and is probably the starting point.
