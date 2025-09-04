@@ -8,6 +8,7 @@
   - [The gene table](#the-gene-table)
   - [The transcript table](#the-transcript-table)
   - [Biomart](#biomart)
+- [Homo sapiens](#homo-sapiens)
 - [Ensembl Compara](#ensembl-compara)
 
 # Ensembl public databases
@@ -609,6 +610,95 @@ cat rattus_norvegicus_core_113_72_go_lookup.txt | wc -l
 ## Biomart
 
 Using version 114 (currently the latest version) I double-checked GO terms associated with two genes and got the [expected result](https://davetang.github.io/muse/biomart_rattus_norvegicus.html#Gene_Ontology_lookup).
+
+# Homo sapiens
+
+Get all tables.
+
+```console
+mysql --user=anonymous --host=ensembldb.ensembl.org -A -e "use homo_sapiens_core_113_38; show tables;" > homo_sapiens_core_113_38_tables.txt
+cat homo_sapiens_core_113_38_tables.txt
+```
+```
+Tables_in_homo_sapiens_core_113_38
+alt_allele
+alt_allele_attrib
+alt_allele_group
+analysis
+analysis_description
+assembly
+assembly_exception
+associated_group
+associated_xref
+attrib_type
+biotype
+coord_system
+data_file
+density_feature
+density_type
+dependent_xref
+ditag
+ditag_feature
+dna
+dna_align_feature
+dna_align_feature_attrib
+exon
+exon_transcript
+external_db
+external_synonym
+gene
+gene_archive
+gene_attrib
+genome_statistics
+identity_xref
+interpro
+intron_supporting_evidence
+karyotype
+map
+mapping_session
+mapping_set
+marker
+marker_feature
+marker_map_location
+marker_synonym
+meta
+meta_coord
+misc_attrib
+misc_feature
+misc_feature_misc_set
+misc_set
+object_xref
+ontology_xref
+operon
+operon_transcript
+operon_transcript_gene
+peptide_archive
+prediction_exon
+prediction_transcript
+protein_align_feature
+protein_feature
+repeat_consensus
+repeat_feature
+rnaproduct
+rnaproduct_attrib
+rnaproduct_type
+seq_region
+seq_region_attrib
+seq_region_mapping
+seq_region_synonym
+simple_feature
+stable_id_event
+supporting_feature
+transcript
+transcript_attrib
+transcript_intron_supporting_evidence
+transcript_supporting_feature
+translation
+translation_attrib
+unmapped_object
+unmapped_reason
+xref
+```
 
 # Ensembl Compara
 
