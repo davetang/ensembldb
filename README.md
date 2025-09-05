@@ -936,4 +936,105 @@ HAVING FIND_IN_SET('homo_sapiens', species)
 AND FIND_IN_SET('mus_musculus', species);
 ```
 
-That will show that 81088 is the species_set_id that we need!
+That will show that 81088 is the species_set_id that we need! Next to find the [method](https://www.ensembl.org/info/docs/api/compara/compara_schema.html#method_link) that we need.
+
+```sql
+select * from method_link;
+```
+```
++----------------+--------------------------+----------------------------------------+---------------------------+
+| method_link_id | type                     | class                                  | display_name              |
++----------------+--------------------------+----------------------------------------+---------------------------+
+|             10 | PECAN                    | GenomicAlignBlock.multiple_alignment   | Mercator-Pecan            |
+|             11 | GERP_CONSTRAINED_ELEMENT | ConstrainedElement.constrained_element | GERP Constrained Elements |
+|             13 | EPO                      | GenomicAlignTree.ancestral_alignment   | EPO                       |
+|             14 | EPO_EXTENDED             | GenomicAlignTree.tree_alignment        | EPO-Extended              |
+|             16 | LASTZ_NET                | GenomicAlignBlock.pairwise_alignment   | LastZ                     |
+|             19 | LASTZ_PATCH              | GenomicAlignBlock.pairwise_alignment   | LastZ-patch               |
+|             22 | CACTUS_HAL               | GenomicAlignBlock.multiple_alignment   | Cactus                    |
+|            101 | SYNTENY                  | SyntenyRegion.synteny                  | synteny                   |
+|            201 | ENSEMBL_ORTHOLOGUES      | Homology.homology                      | orthologues               |
+|            202 | ENSEMBL_PARALOGUES       | Homology.homology                      | paralogues                |
+|            205 | ENSEMBL_PROJECTIONS      | Homology.homology                      | patch projections         |
+|            401 | PROTEIN_TREES            | ProteinTree.protein_tree_node          | protein-trees             |
+|            402 | NC_TREES                 | NCTree.nc_tree_node                    | ncRNA-trees               |
+|            501 | GERP_CONSERVATION_SCORE  | ConservationScore.conservation_score   | GERP Conservation Scores  |
+|            600 | SPECIES_TREE             | SpeciesTree.species_tree_root          | species-tree              |
+|             26 | CACTUS_DB                | GenomicAlignBlock.multiple_alignment   | Cactus                    |
++----------------+--------------------------+----------------------------------------+---------------------------+
+16 rows in set (0.239 sec)
+```
+
+Find the [method_link_species_set](https://www.ensembl.org/info/docs/api/compara/compara_schema.html#method_link_species_set) we need.
+
+```sql
+SELECT * FROM method_link_species_set WHERE method_link_id = 201 AND species_set_id = 81088;
+```
+```
++----------------------------+----------------+----------------+-----------------------+---------+-----+---------------+--------------+
+| method_link_species_set_id | method_link_id | species_set_id | name                  | source  | url | first_release | last_release |
++----------------------------+----------------+----------------+-----------------------+---------+-----+---------------+--------------+
+|                     144756 |            201 |          81088 | Hsap-Mmus orthologues | ensembl |     |           103 |         NULL |
++----------------------------+----------------+----------------+-----------------------+---------+-----+---------------+--------------+
+1 row in set (0.279 sec)
+```
+
+[homology](https://www.ensembl.org/info/docs/api/compara/compara_schema.html#homology) table.
+
+```sql
+select * from homology where method_link_species_set_id = 144756 limit 3;
+```
+```
++-------------+----------------------------+-------------------+-------------------+------+------+------+------+------+----------------------+-------------------+-------------------+-----------+--------------+--------------------+
+| homology_id | method_link_species_set_id | description       | is_tree_compliant | dn   | ds   | n    | s    | lnl  | species_tree_node_id | gene_tree_node_id | gene_tree_root_id | goc_score | wga_coverage | is_high_confidence |
++-------------+----------------------------+-------------------+-------------------+------+------+------+------+------+----------------------+-------------------+-------------------+-----------+--------------+--------------------+
+|  1597340497 |                     144756 | ortholog_one2one  |                 1 | NULL | NULL | NULL | NULL | NULL |           4017300097 |        1410324920 |        1400492000 |      NULL |       100.00 |                  1 |
+|  1597340498 |                     144756 | ortholog_one2many |                 1 | NULL | NULL | NULL | NULL | NULL |           4017300097 |        1410508791 |        1405917700 |      NULL |         0.00 |                  0 |
+|  1597340499 |                     144756 | ortholog_one2many |                 1 | NULL | NULL | NULL | NULL | NULL |           4017300097 |        1410508791 |        1405917700 |      NULL |         0.00 |                  0 |
++-------------+----------------------------+-------------------+-------------------+------+------+------+------+------+----------------------+-------------------+-------------------+-----------+--------------+--------------------+
+3 rows in set (0.434 sec)
+```
+
+```sql
+select count(*) from homology where method_link_species_set_id = 144756;
+```
+```
++----------+
+| count(*) |
++----------+
+|    25768 |
++----------+
+1 row in set (0.244 sec)
+```
+
+[
+homology_member](https://www.ensembl.org/info/docs/api/compara/compara_schema.html#homology_member) table.
+
+```sql
+select * from homology_member where homology_id = 1597340497;
+```
+```
++-------------+----------------+---------------+------------+----------+---------+----------+
+| homology_id | gene_member_id | seq_member_id | cigar_line | perc_cov | perc_id | perc_pos |
++-------------+----------------+---------------+------------+----------+---------+----------+
+|  1597340497 |      918113132 |     957649471 | 86M        |  82.5581 | 79.0698 |  79.0698 |
+|  1597340497 |      918948222 |     959270127 | 8D71M7D    |      100 | 95.7747 |  95.7747 |
++-------------+----------------+---------------+------------+----------+---------+----------+
+2 rows in set (0.336 sec)
+```
+
+And that's how you get one one-to-one orthologue!
+
+```sql
+select * from gene_member where gene_member_id in (918113132, 918948222);
+```
+```
++----------------+--------------------+---------+-------------+----------+--------------+---------------+---------------------+--------------------------------------------------+------------+---------------+-------------+----------------+---------------+
+| gene_member_id | stable_id          | version | source_name | taxon_id | genome_db_id | biotype_group | canonical_member_id | description                                      | dnafrag_id | dnafrag_start | dnafrag_end | dnafrag_strand | display_label |
++----------------+--------------------+---------+-------------+----------+--------------+---------------+---------------------+--------------------------------------------------+------------+---------------+-------------+----------------+---------------+
+|      918113132 | ENSG00000207721    |       1 | ENSEMBLGENE |     9606 |          150 | snoncoding    |           957649471 | microRNA 186 [Source:HGNC Symbol;Acc:HGNC:31557] |   13955536 |      71067631 |    71067716 |             -1 | MIR186        |
+|      918948222 | ENSMUSG00000065431 |       3 | ENSEMBLGENE |    10090 |          459 | snoncoding    |           959270127 | microRNA 186 [Source:MGI Symbol;Acc:MGI:2676850] |   30352835 |     157249916 |   157249986 |              1 | Mir186        |
++----------------+--------------------+---------+-------------+----------+--------------+---------------+---------------------+--------------------------------------------------+------------+---------------+-------------+----------------+---------------+
+2 rows in set (0.306 sec)
+```
+
