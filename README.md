@@ -816,3 +816,35 @@ synteny_region
 ```
 
 The [gene_member](https://www.ensembl.org/info/docs/api/compara/compara_schema.html#gene_member) table links sequences to the EnsEMBL core DB or to external DBs and is probably the starting point.
+
+Find human and mouse.
+
+```sql
+mysql --user=anonymous --host=ensembldb.ensembl.org -A
+use ensembl_compara_113;
+SELECT * FROM genome_db WHERE name IN ("Homo_sapiens", "mus_musculus");
+```
+```
++--------------+----------+--------------+----------+-----------------+---------------+-----------------------+------------------+----------------------------+--------------+---------+---------------+--------------+
+| genome_db_id | taxon_id | name         | assembly | genebuild       | has_karyotype | is_good_for_alignment | genome_component | strain_name                | display_name | locator | first_release | last_release |
++--------------+----------+--------------+----------+-----------------+---------------+-----------------------+------------------+----------------------------+--------------+---------+---------------+--------------+
+|          150 |     9606 | homo_sapiens | GRCh38   | 2014-01-Ensembl |             1 |                     1 | NULL             | NULL                       | Human        | NULL    |            76 |         NULL |
+|          459 |    10090 | mus_musculus | GRCm39   | 2020-08-Ensembl |             1 |                     1 | NULL             | reference (CL57BL6) strain | Mouse        | NULL    |           103 |         NULL |
++--------------+----------+--------------+----------+-----------------+---------------+-----------------------+------------------+----------------------------+--------------+---------+---------------+--------------+
+2 rows in set (0.254 sec)
+```
+
+Unique human gene IDs; expected 78932 based on Ensembl 113 but got 86691. The gene build is 2014-01-Ensembl, so perhaps this is not using the human annotation from Ensembl 113 but instead Ensembl 76 based on `first_release`.
+
+```sql
+select count(distinct(stable_id)) from gene_member where genome_db_id = 150;
+```
+```
++----------------------------+
+| count(distinct(stable_id)) |
++----------------------------+
+|                      86691 |
++----------------------------+
+1 row in set (0.310 sec)
+```
+
