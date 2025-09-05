@@ -1,5 +1,6 @@
 ## Table of Contents
 
+- [The Ensembl Release Cycle](#the-ensembl-release-cycle)
 - [Ensembl public databases](#ensembl-public-databases)
 - [Setup](#setup)
 - [Rattus norvegicus](#rattus-norvegicus)
@@ -11,6 +12,26 @@
 - [Homo sapiens](#homo-sapiens)
 - [Ensembl Compara](#ensembl-compara)
   - [Database](#database)
+
+# The Ensembl Release Cycle
+
+[Ensembl data](https://www.ensembl.org/info/about/release_cycle.html) is released on an approximately three-month cycle (occasionally longer if a lot of development work is being undertaken).
+
+> 1. Genebuild
+>
+> The genebuild stage varies in length depending on the species being annotated. Most species take from three to six months to annotate using the Ensembl automatic annotation system. The time it takes to do a genebuild depends on factors such as assembly quality, number of species-specific protein sequences available in UniProt, and amount of RNAseq data. Individual species are updated on an irregular schedule, depending on the availability of new assemblies and evidence. New species are added frequently from a number of sequencing projects around the world, and all species databases may receive minor updates. These can include patches to correct erroneous data and updates to data that changes regularly (such as cDNAs for human and mouse).
+>
+> The genebuild team members take evidence for genes and transcripts, such as protein and mRNAs, and combine these in the analysis pipeline to create an Ensembl core database and optionally otherfeatures, rnaseq, and cdna databases. For human, mouse and zebrafish, the Ensembl predictions are combined with manual annotation data. Once these databases are complete, they are handed over to the other Ensembl data teams for further processing (see below).
+>
+> 2. Additional core data
+>
+> The role of the core team is two-fold: to provide API support for the core and core-like (otherfeatures, cdna and rnaseq) databases, and to run scripts that add supplementary data to the database (e.g. gene counts) and check that the database contents are as complete and accurate as possible. These latter scripts, known as healthchecks, help to pick out any anomalous data produced by the automated pipeline, such as unusually long genes.
+>
+> 3. Other databases
+>
+> * Compara - The comparative genomics team runs several pipelines which bring together the separate species databases, align sequences to identify syntenous regions and predict phylogenetic trees, orthologues, paralogues, and protein family clusters. The resultant data is compiled into a single large database.
+> * Variation - The variation team brings together data from a variety of sources, including dbSNP, and also call new variations from resequencing data. These are then used to create variation databases for the relevant species. Currently there are around a dozen species with variation data, including human, chimp, mouse, rat, dog and zebrafish.
+> * Regulation - The Regulation team processes public experimental data to generate Regulatory Annotation, which includes regulatory features, such as promoters and enhancers.
 
 # Ensembl public databases
 
