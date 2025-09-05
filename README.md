@@ -900,3 +900,40 @@ genome_db_id	taxon_id	name	assembly	genebuild	has_karyotype	is_good_for_alignmen
 150	9606	homo_sapiens	GRCh38	2014-01-Ensembl	1	1	NULL	NULL	Human	NULL	76	NULL
 ```
 
+We need the human and mouse set; this is the example query on the [species set](https://www.ensembl.org/info/docs/api/compara/compara_schema.html#species_set) table.
+
+```sql
+SELECT species_set_id, GROUP_CONCAT(name) AS species FROM species_set JOIN genome_db USING(genome_db_id) GROUP BY species_set_id HAVING species LIKE '%homo_sapiens%' ORDER BY species_set_id LIMIT 10;
+```
+```
++----------------+------------------------------------+
+| species_set_id | species                            |
++----------------+------------------------------------+
+|          35674 | choloepus_hoffmanni,homo_sapiens   |
+|          35676 | oryctolagus_cuniculus,homo_sapiens |
+|          35678 | otolemur_garnettii,homo_sapiens    |
+|          35680 | dasypus_novemcinctus,homo_sapiens  |
+|          35682 | erinaceus_europaeus,homo_sapiens   |
+|          35684 | echinops_telfairi,homo_sapiens     |
+|          35686 | loxodonta_africana,homo_sapiens    |
+|          35687 | notamacropus_eugenii,homo_sapiens  |
+|          35689 | ochotona_princeps,homo_sapiens     |
+|          35690 | procavia_capensis,homo_sapiens     |
++----------------+------------------------------------+
+10 rows in set (0.241 sec)
+```
+
+Modify the example to find human and mouse sets.
+
+```sql
+SELECT species_set_id,
+GROUP_CONCAT(name) AS species
+FROM species_set
+JOIN genome_db
+USING(genome_db_id)
+GROUP BY species_set_id
+HAVING FIND_IN_SET('homo_sapiens', species)
+AND FIND_IN_SET('mus_musculus', species);
+```
+
+That will show that 81088 is the species_set_id that we need!
