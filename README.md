@@ -834,7 +834,7 @@ SELECT * FROM genome_db WHERE name IN ("Homo_sapiens", "mus_musculus");
 2 rows in set (0.254 sec)
 ```
 
-Unique human gene IDs; expected 78932 based on Ensembl 113 but got 86691. The gene build is 2014-01-Ensembl, so perhaps this is not using the human annotation from Ensembl 113 but instead Ensembl 76 based on `first_release`.
+Unique human gene IDs; expected 78932 based on Ensembl 113 but got 86691. The gene build is 2014-01-Ensembl, so perhaps this is not using the human annotation from Ensembl 113 but instead Ensembl 76 based on `first_release`. I'm not sure how more distinct gene IDs turn up.
 
 ```sql
 select count(distinct(stable_id)) from gene_member where genome_db_id = 150;
@@ -846,5 +846,36 @@ select count(distinct(stable_id)) from gene_member where genome_db_id = 150;
 |                      86691 |
 +----------------------------+
 1 row in set (0.310 sec)
+```
+
+Check the number of genes in Ensembl 76 but this is much less.
+
+```console
+mysql --user=anonymous --host=ensembldb.ensembl.org -A -e "use homo_sapiens_core_76_38; select count(*) from gene;" > homo_sapiens_core_76_38_gene_count.txt
+cat homo_sapiens_core_76_38_gene_count.txt
+```
+```
+count(*)
+63263
+```
+
+Check Compara 114; the number of gene counts differs.
+
+```console
+mysql --user=anonymous --host=ensembldb.ensembl.org -A -e "use ensembl_compara_114; select count(distinct(stable_id)) from gene_member where genome_db_id = 150;"
+```
+```
+count(distinct(stable_id))
+86633
+```
+
+The genome information does not change.
+
+```console
+mysql --user=anonymous --host=ensembldb.ensembl.org -A -e "use ensembl_compara_114; select * from genome_db where name = 'homo_sapiens';"
+```
+```
+genome_db_id	taxon_id	name	assembly	genebuild	has_karyotype	is_good_for_alignment	genome_component	strain_name	display_name	locator	first_release	last_release
+150	9606	homo_sapiens	GRCh38	2014-01-Ensembl	1	1	NULL	NULL	Human	NULL	76	NULL
 ```
 
