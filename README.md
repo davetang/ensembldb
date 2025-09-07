@@ -1038,3 +1038,53 @@ select * from gene_member where gene_member_id in (918113132, 918948222);
 2 rows in set (0.306 sec)
 ```
 
+### Human-mouse orthologues
+
+* 81088 is the species_set_id
+* 201 is the method_link_id
+* 144756 is method_link_species_set_id
+
+```sql
+SELECT homology_id,h.description,gene_member_id,stable_id,g.description,perc_cov,perc_id,perc_pos FROM homology h
+JOIN homology_member m USING (homology_id)
+JOIN gene_member g USING (gene_member_id)
+WHERE method_link_species_set_id = 144756
+ORDER BY homology_id
+LIMIT 12;
+```
+```
++-------------+-------------------+----------------+--------------------+---------------------------------------------------------------------------------------------+----------+---------+----------+
+| homology_id | description       | gene_member_id | stable_id          | description                                                                                 | perc_cov | perc_id | perc_pos |
++-------------+-------------------+----------------+--------------------+---------------------------------------------------------------------------------------------+----------+---------+----------+
+|    90438456 | ortholog_one2one  |      918072555 | ENSG00000072415    | protein associated with LIN7 1, MAGUK p55 family member [Source:HGNC Symbol;Acc:HGNC:18669] |      100 | 96.7407 |  98.6667 |
+|    90438456 | ortholog_one2one  |      918939233 | ENSMUSG00000021112 | protein associated with LIN7 1, MAGUK family member [Source:MGI Symbol;Acc:MGI:1927339]     |      100 | 96.7407 |  98.6667 |
+|    90438457 | ortholog_one2one  |      918081138 | ENSG00000142327    | arginyl aminopeptidase like 1 [Source:HGNC Symbol;Acc:HGNC:10079]                           |  98.4828 | 92.6897 |  95.3103 |
+|    90438457 | ortholog_one2one  |      918979418 | ENSMUSG00000026269 | arginyl aminopeptidase (aminopeptidase B)-like 1 [Source:MGI Symbol;Acc:MGI:1914170]        |  99.1667 | 93.3333 |  95.9722 |
+|    90438458 | ortholog_one2one  |      918088329 | ENSG00000136861    | CDK5 regulatory subunit associated protein 2 [Source:HGNC Symbol;Acc:HGNC:18672]            |  95.0872 | 67.9873 |   77.813 |
+|    90438458 | ortholog_one2one  |      918930121 | ENSMUSG00000039298 | CDK5 regulatory subunit associated protein 2 [Source:MGI Symbol;Acc:MGI:2384875]            |  98.7925 | 70.6367 |  80.8452 |
+|    90438459 | ortholog_one2one  |      918114564 | ENSG00000178104    | phosphodiesterase 4D interacting protein [Source:HGNC Symbol;Acc:HGNC:15580]                |  99.6683 | 81.3847 |  88.8474 |
+|    90438459 | ortholog_one2one  |      918946601 | ENSMUSG00000038170 | phosphodiesterase 4D interacting protein (myomegalin) [Source:MGI Symbol;Acc:MGI:1891434]   |  97.6045 | 79.6996 |  87.0077 |
+|    90438460 | ortholog_one2many |      918105007 | ENSG00000140259    | microfibril associated protein 1 [Source:HGNC Symbol;Acc:HGNC:7032]                         |      100 | 99.5444 |      100 |
+|    90438460 | ortholog_one2many |      918926551 | ENSMUSG00000068479 | microfibrillar-associated protein 1A [Source:MGI Symbol;Acc:MGI:1914782]                    |      100 | 99.5444 |      100 |
+|    90438461 | ortholog_one2many |      918105007 | ENSG00000140259    | microfibril associated protein 1 [Source:HGNC Symbol;Acc:HGNC:7032]                         |      100 | 99.5444 |      100 |
+|    90438461 | ortholog_one2many |      918926547 | ENSMUSG00000048222 | microfibrillar-associated protein 1B [Source:MGI Symbol;Acc:MGI:3694697]                    |      100 | 99.5444 |      100 |
++-------------+-------------------+----------------+--------------------+---------------------------------------------------------------------------------------------+----------+---------+----------+
+12 rows in set (0.290 sec)
+```
+
+Number of results.
+
+```sql
+SELECT count(*) FROM homology h
+JOIN homology_member m USING (homology_id)
+JOIN gene_member g USING (gene_member_id)
+WHERE method_link_species_set_id = 144756;
+```
+```
++----------+
+| count(*) |
++----------+
+|    51536 |
++----------+
+1 row in set (0.523 sec)
+```
