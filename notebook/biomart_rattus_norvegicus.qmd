@@ -42,12 +42,23 @@ suppressPackageStartupMessages({
 })
 ```
 
+## Ensembl 113
+
+Confirm that rat is missing from Ensembl 113.
+
+```{r ensembl_113}
+ensembl_113 <- useMart("ENSEMBL_MART_ENSEMBL", host = "https://oct2024.archive.ensembl.org")
+avail_datasets_v113 <- listDatasets(ensembl_113)
+grep('norvegicus', avail_datasets_v113$dataset, value = TRUE)
+```
+
 ## Ensembl 114
 
 List archives.
 
 ```{r list_ensembl_archives}
-biomaRt::listEnsemblArchives()
+biomaRt::listEnsemblArchives() |>
+  knitr::kable()
 ```
 
 Use Ensembl 114.
