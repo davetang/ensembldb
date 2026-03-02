@@ -9,6 +9,7 @@
   - [The gene table](#the-gene-table)
   - [The transcript table](#the-transcript-table)
   - [Biomart](#biomart)
+  - [Gene lookup](#gene-lookup)
 - [Homo sapiens](#homo-sapiens)
 - [Ensembl Compara](#ensembl-compara)
   - [Database](#database)
@@ -635,6 +636,35 @@ I have confirmed that all the results are consistent with Ensembl 114; see noteb
 
 ```
 Pairs in both:          210063
+Only in biomaRt:        0
+Only in manual result:  0
+```
+
+## Gene lookup
+
+Create gene lookup tables.
+
+```console
+mysql \
+   --user=anonymous \
+   --host=ensembldb.ensembl.org \
+   -A \
+   -e "use rattus_norvegicus_core_113_72; select g.stable_id as ensembl_gene_id, x.display_label as external_gene_name, g.description from gene g join xref x ON x.xref_id = g.display_xref_id;" \
+   > rattus_norvegicus_core_113_72_gene_lookup.txt
+
+mysql \
+   --user=anonymous \
+   --host=ensembldb.ensembl.org \
+   -A \
+   -e "use rattus_norvegicus_core_114_1; select g.stable_id as ensembl_gene_id, x.display_label as external_gene_name, g.description from gene g join xref x ON x.xref_id = g.display_xref_id;" \
+   > rattus_norvegicus_core_114_1_gene_lookup.txt
+```
+
+Comparing ensembl_gene_id and external_gene_name with biomaRt for Ensembl 114.
+
+
+```
+Pairs in both:          24715
 Only in biomaRt:        0
 Only in manual result:  0
 ```

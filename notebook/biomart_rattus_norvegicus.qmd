@@ -171,3 +171,72 @@ Pairs in both:          210063
 Only in biomaRt:        0 
 Only in manual result:  0 
 ```
+
+## Gene symbol
+
+Fetch the gene symbol and description for each Ensembl Gene ID in `all_gene_ids`. The `external_gene_name` attribute returns the short gene symbol (e.g. `Tp53`) and `description` returns the full human-readable gene name from Ensembl.
+
+```{r get_gene_symbol_description}
+gene_symbol_desc <- getBM(
+  attributes = c("ensembl_gene_id", "external_gene_name", "description"),
+  filters = "ensembl_gene_id",
+  values = all_gene_ids$ensembl_gene_id,
+  mart = ensembl_114_rat
+)
+
+head(gene_symbol_desc)
+```
+
+Load manual results.
+
+```{r manual_gene_lookup}
+manual_gene_lookup <- readr::read_tsv("../rattus_norvegicus_core_114_1_gene_lookup.txt", show_col_types = FALSE)
+
+manual_gene_lookup |>
+  dplyr::arrange(ensembl_gene_id) |>
+  head()
+```
+
+### Compare gene IDs
+
+Manual results exclude gene IDs that don't have any annotations.
+
+```{r gene_lookup_gene_ids}
+x <- unique(gene_symbol_desc$ensembl_gene_id)
+y <- unique(manual_gene_lookup$ensembl_gene_id)
+
+length(x)
+length(y)
+
+all(y %in% x)
+```
+
+### Compare external gene names
+
+Remove missing gene names.
+
+```{r gene_symbol_desc_clean}
+gene_symbol_desc |>
+  dplyr::select(ensembl_gene_id, external_gene_name) |>
+  dplyr::filter(external_gene_name != "") -> gene_symbol_desc_clean
+
+manual_gene_lookup_no_desc <- dplyr::select(manual_gene_lookup, ensembl_gene_id, external_gene_name)
+```
+
+Compare.
+
+```{r compare_gene_lookup}
+both      <- dplyr::intersect(gene_symbol_desc_clean, manual_gene_lookup_no_desc)
+only_bm   <- dplyr::anti_join(gene_symbol_desc_clean, manual_gene_lookup_no_desc, by = c("ensembl_gene_id", "external_gene_name"))
+only_man  <- dplyr::anti_join(manual_gene_lookup_no_desc, gene_symbol_desc_clean, by = c("ensembl_gene_id", "external_gene_name"))
+
+cat("Pairs in both:         ", nrow(both), "\n")
+cat("Only in biomaRt:       ", nrow(only_bm), "\n")
+cat("Only in manual result: ", nrow(only_man), "\n")
+```
+
+```
+Pairs in both:          24715 
+Only in biomaRt:        0 
+Only in manual result:  0
+```
