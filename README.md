@@ -631,7 +631,13 @@ cat rattus_norvegicus_core_113_72_go_lookup.txt | wc -l
 
 ## Biomart
 
-Using version 114 (currently the latest version) I double-checked GO terms associated with two genes and got the [expected result](https://davetang.github.io/muse/biomart_rattus_norvegicus.html#Gene_Ontology_lookup).
+I have confirmed that all the results are consistent with Ensembl 114; see notebook/biomart_rattus_norvegicus.qmd for details:
+
+```
+Pairs in both:          210063
+Only in biomaRt:        0
+Only in manual result:  0
+```
 
 # Homo sapiens
 
