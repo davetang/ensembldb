@@ -1,0 +1,173 @@
+---
+title: "Use biomaRt with Rattus norvegicus"
+date: "`r Sys.Date()`"
+execute:
+  echo: true
+  cache: false
+format:
+  html:
+    mermaid:
+      theme: neutral
+    toc: true
+    embed-resources: true
+    number-sections: true
+    html-math-method: katex
+    highlight-style: github
+engine: knitr
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Installation
+
+To begin, install the {biomaRt} package.
+
+```{r install_biomart, eval=FALSE}
+if (!require("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+
+BiocManager::install("biomaRt")
+```
+
+## Package
+
+Load package.
+
+```{r load_biomart}
+packageVersion("biomaRt")
+suppressPackageStartupMessages({
+  library(biomaRt)
+})
+```
+
+## Ensembl 114
+
+List archives.
+
+```{r list_ensembl_archives}
+biomaRt::listEnsemblArchives()
+```
+
+Use Ensembl 114.
+
+```{r ensembl_114}
+my_host <- "https://may2025.archive.ensembl.org"
+ensembl_114 <- useMart("ENSEMBL_MART_ENSEMBL", host = my_host)
+avail_datasets_v114 <- listDatasets(ensembl_114)
+rat_dataset <- grep('norvegicus', avail_datasets_v114$dataset, value = TRUE)
+rat_dataset
+```
+
+Rat database.
+
+```{r ensembl_114_rat}
+ensembl_114_rat <- useMart(
+  biomart = "ENSEMBL_MART_ENSEMBL",
+  dataset = rat_dataset,
+  host = my_host
+)
+```
+
+## Database results
+
+Load database results.
+
+```{r manual_res}
+manual_res <- readr::read_tsv(file = "../rattus_norvegicus_core_114_1_go_lookup.txt", show_col_types = FALSE)
+head(manual_res)
+```
+
+The manual results are not unique!
+
+```{r manual_res_unique}
+manual_res |>
+  dplyr::arrange(ensembl_gene_id, go_id) |>
+  dplyr::add_count(across(everything())) |>
+  head(10)
+```
+
+Create unique table.
+
+```{r manual_res_uniq}
+manual_res |>
+  dplyr::arrange(ensembl_gene_id, go_id) |>
+  dplyr::distinct() -> manual_res_uniq
+
+head(manual_res_uniq)
+```
+
+Number of genes.
+
+```{r manual_res_uniq_genes}
+length(unique(manual_res_uniq$ensembl_gene_id))
+```
+
+## Gene Ontology lookup
+
+Get all Ensembl Gene IDs.
+
+```{r all_ensembl_gene_id}
+all_gene_ids <- getBM(
+  attributes = "ensembl_gene_id",
+  mart = ensembl_114_rat
+)
+
+length(all_gene_ids$ensembl_gene_id)
+length(unique(all_gene_ids$ensembl_gene_id))
+```
+
+Using `ensembl_gene_id` get all `go_id`.
+
+```{r ensembl_gene_id_and_go_id}
+gene_id_go <- getBM(
+  attributes = c("ensembl_gene_id", "go_id"),
+  filters = "ensembl_gene_id",
+  values = all_gene_ids$ensembl_gene_id,
+  mart = ensembl_114_rat
+)
+
+dim(gene_id_go)
+head(gene_id_go)
+```
+
+Number of genes.
+
+```{r gene_id_go_uniq_genes}
+length(unique(gene_id_go$ensembl_gene_id))
+```
+
+Need to remove empty entries.
+
+```{r remove_empty_go_id}
+gene_id_go |>
+  dplyr::filter(go_id != "") -> gene_id_go_clean
+
+length(unique(gene_id_go_clean$ensembl_gene_id))
+```
+
+## Compare Gene Ontology tables
+
+Each row in both `gene_id_go` and `manual_res` represents a unique `(ensembl_gene_id, go_id)` pair. To compare the two tables we use two `dplyr` verbs:
+
+- `dplyr::intersect(x, y)` treats the rows of each table as a set and returns only those rows that appear in **both** `x` and `y`. Both columns must match for a row to be included.
+- `dplyr::anti_join(x, y, by)` returns all rows from `x` that have **no match** in `y` based on the specified key columns. It is applied twice: once to find pairs present only in `gene_id_go` (biomaRt result) and once to find pairs present only in `manual_res` (database result).
+
+Together, these three operations partition all observed pairs into three disjoint groups: shared, biomaRt-only, and manual-only.
+
+```{r compare_gene_ontology_tables}
+both      <- dplyr::intersect(gene_id_go_clean, manual_res_uniq)
+only_bm   <- dplyr::anti_join(gene_id_go_clean, manual_res_uniq, by = c("ensembl_gene_id", "go_id"))
+only_man  <- dplyr::anti_join(manual_res_uniq, gene_id_go_clean, by = c("ensembl_gene_id", "go_id"))
+
+cat("Pairs in both:         ", nrow(both), "\n")
+cat("Only in biomaRt:       ", nrow(only_bm), "\n")
+cat("Only in manual result: ", nrow(only_man), "\n")
+```
+
+```
+Pairs in both:          210063 
+Only in biomaRt:        0 
+Only in manual result:  0 
+```
